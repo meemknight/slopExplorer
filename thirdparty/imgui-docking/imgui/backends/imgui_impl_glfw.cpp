@@ -83,6 +83,7 @@
 #undef APIENTRY
 #define GLFW_EXPOSE_NATIVE_WIN32
 #include <GLFW/glfw3native.h>   // for glfwGetWin32Window()
+#include <Windows.h>
 #endif
 #ifdef __APPLE__
 #define GLFW_EXPOSE_NATIVE_COCOA
@@ -118,6 +119,45 @@
 #define GLFW_HAS_GAMEPAD_API            (GLFW_VERSION_COMBINED >= 3300) // 3.3+ glfwGetGamepadState() new api
 #define GLFW_HAS_GETKEYNAME             (GLFW_VERSION_COMBINED >= 3200) // 3.2+ glfwGetKeyName()
 #define GLFW_HAS_GETERROR               (GLFW_VERSION_COMBINED >= 3300) // 3.3+ glfwGetError()
+
+#ifdef _WIN32
+#ifndef DWMWA_USE_IMMERSIVE_DARK_MODE
+#define DWMWA_USE_IMMERSIVE_DARK_MODE 20
+#endif
+#ifndef DWMWA_BORDER_COLOR
+#define DWMWA_BORDER_COLOR 34
+#endif
+#ifndef DWMWA_CAPTION_COLOR
+#define DWMWA_CAPTION_COLOR 35
+#endif
+#ifndef DWMWA_TEXT_COLOR
+#define DWMWA_TEXT_COLOR 36
+#endif
+
+typedef HRESULT(WINAPI* ImGui_ImplGlfw_DwmSetWindowAttributeFn)(HWND, DWORD, LPCVOID, DWORD);
+
+static void ImGui_ImplGlfw_ApplyWin32WindowTheme(HWND hwnd)
+{
+    HMODULE dwmapi = ::LoadLibraryA("dwmapi.dll");
+    if (dwmapi == nullptr)
+        return;
+
+    ImGui_ImplGlfw_DwmSetWindowAttributeFn dwm_set_window_attribute = (ImGui_ImplGlfw_DwmSetWindowAttributeFn)::GetProcAddress(dwmapi, "DwmSetWindowAttribute");
+    if (dwm_set_window_attribute != nullptr)
+    {
+        const BOOL dark_mode = TRUE;
+        const COLORREF border_color = RGB(90, 90, 90);
+        const COLORREF caption_color = RGB(70, 70, 70);
+        const COLORREF text_color = RGB(245, 245, 245);
+        dwm_set_window_attribute(hwnd, DWMWA_USE_IMMERSIVE_DARK_MODE, &dark_mode, sizeof(dark_mode));
+        dwm_set_window_attribute(hwnd, DWMWA_BORDER_COLOR, &border_color, sizeof(border_color));
+        dwm_set_window_attribute(hwnd, DWMWA_CAPTION_COLOR, &caption_color, sizeof(caption_color));
+        dwm_set_window_attribute(hwnd, DWMWA_TEXT_COLOR, &text_color, sizeof(text_color));
+    }
+
+    ::FreeLibrary(dwmapi);
+}
+#endif
 
 // GLFW data
 enum GlfwClientApi
@@ -960,6 +1000,7 @@ static void ImGui_ImplGlfw_CreateWindow(ImGuiViewport* viewport)
     viewport->PlatformHandle = (void*)vd->Window;
 #ifdef _WIN32
     viewport->PlatformHandleRaw = glfwGetWin32Window(vd->Window);
+    ImGui_ImplGlfw_ApplyWin32WindowTheme((HWND)viewport->PlatformHandleRaw);
 #elif defined(__APPLE__)
     viewport->PlatformHandleRaw = (void*)glfwGetCocoaWindow(vd->Window);
 #endif
@@ -1036,6 +1077,7 @@ static void ImGui_ImplGlfw_ShowWindow(ImGuiViewport* viewport)
 #if defined(_WIN32)
     // GLFW hack: Hide icon from task bar
     HWND hwnd = (HWND)viewport->PlatformHandleRaw;
+    ImGui_ImplGlfw_ApplyWin32WindowTheme(hwnd);
     if (viewport->Flags & ImGuiViewportFlags_NoTaskBarIcon)
     {
         LONG ex_style = ::GetWindowLong(hwnd, GWL_EXSTYLE);

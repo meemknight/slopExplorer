@@ -17,6 +17,7 @@
 #include "platformInput.h"
 #include "otherPlatformFunctions.h"
 #include "gameLayer.h"
+#include "fileExplorerWindow.h"
 #include <fstream>
 #include <chrono>
 #include "errorReporting.h"
@@ -488,10 +489,13 @@ int main()
 		//io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
 		io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;           // Enable Docking
 		io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;         // Enable Multi-Viewport / Platform Windows
-		io.ConfigViewportsNoAutoMerge = false;
+		io.ConfigDockingAlwaysTabBar = false;
+		io.ConfigViewportsNoAutoMerge = true;
 		io.ConfigViewportsNoDecoration = false;
+		io.ConfigViewportsNoDefaultParent = true;
 		//io.ConfigViewportsNoTaskBarIcon = true;
-		io.FontGlobalScale = 2; //adjust scale
+		io.FontGlobalScale = fileExplorer::globalFontScale();
+		ImGui::GetStyle().FramePadding.y = 10.0f;
 	
 		ImGui_ImplGlfw_InitForOpenGL(wind, true);
 		ImGui_ImplGlfw_SetCallbacksChainForAllWindows(true);
@@ -522,10 +526,10 @@ int main()
 			ImFontConfig config;
 			config.MergeMode = true;
 			config.PixelSnapH = true;
-			config.GlyphMinAdvanceX = 32.0f; // adjust as needed
+			config.GlyphMinAdvanceX = 16.0f;
 			
 			static const ImWchar icon_ranges[] = {ICON_MIN_FK, ICON_MAX_FK, 0};
-			io.Fonts->AddFontFromFileTTF(RESOURCES_PATH "fontawesome-webfont.ttf", 32.0f, &config, icon_ranges);
+			io.Fonts->AddFontFromFileTTF(RESOURCES_PATH "fontawesome-webfont.ttf", 16.0f, &config, icon_ranges);
 			
 			// Build fonts after all additions
 			io.Fonts->Build();

@@ -7,7 +7,6 @@ namespace fileExplorer
 	struct fileExplorerWindow
 	{
 		bool open = true;
-		bool requestFocus = true;
 		bool showHiddenFiles = false;
 		bool gridView = false;
 		float leftPaneWidth = 220.0f;
@@ -20,4 +19,5 @@ namespace fileExplorer
 	bool createWindowShortcutPressed();
 	void drawWindows(std::unordered_map<int, fileExplorerWindow> &windows, int &nextWindowId);
 	void shutdownWindowShortcuts();
+	float &globalFontScale();
 }

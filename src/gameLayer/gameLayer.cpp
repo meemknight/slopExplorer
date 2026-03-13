@@ -89,10 +89,11 @@ bool gameLogic(float deltaTime, platform::Input &input)
 
 	fileExplorer::drawWindows(explorerWindows, nextExplorerWindowId);
 
-	if (ImGui::IsKeyPressed(ImGuiKey_Escape))
-	{
-		explorerWindows.clear();
-	}
+	//I don't want this feature!
+	//if (ImGui::IsKeyPressed(ImGuiKey_Escape))
+	//{
+	//	explorerWindows.clear();
+	//}
 
 	return true;
 #pragma endregion

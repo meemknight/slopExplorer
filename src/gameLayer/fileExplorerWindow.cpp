@@ -1,6 +1,7 @@
 #include "fileExplorerWindow.h"
 
 #include "imgui.h"
+#include "imgui_internal.h"
 #include <cstdio>
 #include <vector>
 #include <algorithm>
@@ -37,13 +38,9 @@ namespace
 
 		ImGuiWindowClass explorerWindowClass = {};
 		explorerWindowClass.ClassId = fileExplorerWindowClassId;
-		explorerWindowClass.DockingAllowUnclassed = false;
+		explorerWindowClass.ParentViewportId = 0;
+		explorerWindowClass.DockingAlwaysTabBar = true;
 		ImGui::SetNextWindowClass(&explorerWindowClass);
-
-		if (windowData.requestFocus)
-		{
-			ImGui::SetNextWindowFocus();
-		}
 
 		if (windowData.open)
 		{
@@ -52,7 +49,6 @@ namespace
 
 		if (ImGui::Begin(windowLabel, &windowData.open))
 		{
-			windowData.requestFocus = false;
 			ImGui::PushID(windowId);
 
 			if (ImGui::Button("New Explorer"))
@@ -123,11 +119,15 @@ namespace
 
 namespace fileExplorer
 {
+	float &globalFontScale()
+	{
+		static float fontScale = 2.0f;
+		return fontScale;
+	}
+
 	void createWindow(std::unordered_map<int, fileExplorerWindow> &windows, int &nextWindowId)
 	{
-		fileExplorerWindow newWindow = {};
-		newWindow.requestFocus = true;
-		windows[nextWindowId] = newWindow;
+		windows[nextWindowId] = fileExplorerWindow{};
 		nextWindowId += 1;
 	}
 
@@ -166,29 +166,14 @@ namespace fileExplorer
 	{
 		bool createWindowRequest = false;
 		std::vector<int> windowsToClose;
-		std::vector<int> orderedWindowIds;
-		orderedWindowIds.reserve(windows.size());
 
-		for (const auto &windowEntry : windows)
+		for (auto &windowEntry : windows)
 		{
-			orderedWindowIds.push_back(windowEntry.first);
-		}
+			drawSingleWindow(windowEntry.first, windowEntry.second, createWindowRequest);
 
-		std::sort(orderedWindowIds.begin(), orderedWindowIds.end());
-
-		for (int windowId : orderedWindowIds)
-		{
-			auto windowIterator = windows.find(windowId);
-			if (windowIterator == windows.end())
+			if (!windowEntry.second.open)
 			{
-				continue;
-			}
-
-			drawSingleWindow(windowIterator->first, windowIterator->second, createWindowRequest);
-
-			if (!windowIterator->second.open)
-			{
-				windowsToClose.push_back(windowIterator->first);
+				windowsToClose.push_back(windowEntry.first);
 			}
 		}
 
