@@ -1,7 +1,6 @@
 #include "fileExplorerWindow.h"
 
 #include "imgui.h"
-#include "imgui_internal.h"
 #include <cstdio>
 #include <vector>
 #include <algorithm>
@@ -13,7 +12,6 @@
 #ifdef _WIN32
 constexpr int fileExplorerCreateWindowHotkeyId = 0x1200;
 constexpr ImGuiID fileExplorerWindowClassId = 0xF11E0001;
-
 	bool createWindowShortcutPressedFallback()
 	{
 		static bool wasPressed = false;

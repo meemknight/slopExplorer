@@ -18,6 +18,7 @@
 #include "otherPlatformFunctions.h"
 #include "gameLayer.h"
 #include "fileExplorerWindow.h"
+#include "windowsShell.h"
 #include <fstream>
 #include <chrono>
 #include "errorReporting.h"
@@ -423,6 +424,17 @@ int main()
 #endif
 #endif
 
+	if (!windowsShell::acquireSingleInstance())
+	{
+		return 0;
+	}
+
+	if (!windowsShell::initTrayIcon())
+	{
+		windowsShell::releaseSingleInstance();
+		return 0;
+	}
+
 
 #pragma region window and opengl
 
@@ -490,7 +502,7 @@ int main()
 		io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;           // Enable Docking
 		io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;         // Enable Multi-Viewport / Platform Windows
 		io.ConfigDockingAlwaysTabBar = false;
-		io.ConfigViewportsNoAutoMerge = true;
+		io.ConfigViewportsNoAutoMerge = false;
 		io.ConfigViewportsNoDecoration = false;
 		io.ConfigViewportsNoDefaultParent = true;
 		//io.ConfigViewportsNoTaskBarIcon = true;
@@ -498,7 +510,7 @@ int main()
 		ImGui::GetStyle().FramePadding.y = 10.0f;
 	
 		ImGui_ImplGlfw_InitForOpenGL(wind, true);
-		ImGui_ImplGlfw_SetCallbacksChainForAllWindows(true);
+		ImGui_ImplGlfw_SetCallbacksChainForAllWindows(false);
 		ImGui_ImplOpenGL3_Init("#version 330");
 
 
@@ -578,6 +590,9 @@ int main()
 
 	while (!glfwWindowShouldClose(wind))
 	{
+		glfwPollEvents();
+		windowsShell::pumpMessages();
+
 		//UpdateMusicStream(m);
 		//PlayMusicStream(m);
 
@@ -621,6 +636,8 @@ int main()
 		if (!gameLogic(augmentedDeltaTime, input))
 		{
 			closeGame();
+			windowsShell::shutdownTrayIcon();
+			windowsShell::releaseSingleInstance();
 			return 0;
 		}
 
@@ -701,13 +718,14 @@ int main()
 		#pragma endregion
 
 		glfwSwapBuffers(wind);
-		glfwPollEvents();
 
 	#pragma endregion
 
 	}
 
 	closeGame();
+	windowsShell::shutdownTrayIcon();
+	windowsShell::releaseSingleInstance();
 
 	//if you want the console to stay after closing the window
 	//std::cin.clear();

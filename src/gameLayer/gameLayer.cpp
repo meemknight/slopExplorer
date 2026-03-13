@@ -15,6 +15,7 @@
 #include <imguiTools.h>
 #include <logs.h>
 #include "fileExplorerWindow.h"
+#include "windowsShell.h"
 
 
 bool initGame()
@@ -85,6 +86,16 @@ bool gameLogic(float deltaTime, platform::Input &input)
 	if (fileExplorer::createWindowShortcutPressed())
 	{
 		fileExplorer::createWindow(explorerWindows, nextExplorerWindowId);
+	}
+
+	if (windowsShell::consumeCreateWindowRequest())
+	{
+		fileExplorer::createWindow(explorerWindows, nextExplorerWindowId);
+	}
+
+	if (windowsShell::consumeQuitRequest())
+	{
+		return false;
 	}
 
 	fileExplorer::drawWindows(explorerWindows, nextExplorerWindowId);
