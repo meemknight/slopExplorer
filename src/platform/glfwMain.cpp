@@ -613,6 +613,7 @@ int main()
 
 	#pragma region imgui
 		#if REMOVE_IMGUI == 0
+			ImGui::GetIO().FontGlobalScale = fileExplorer::globalFontScale();
 			ImGui_ImplOpenGL3_NewFrame();
 			ImGui_ImplGlfw_NewFrame();
 			ImGui::NewFrame();
@@ -718,6 +719,19 @@ int main()
 		#pragma endregion
 
 		glfwSwapBuffers(wind);
+
+		const float targetFps = getTargetFrameRate();
+		if (targetFps > 0.0f)
+		{
+			const double targetFrameTime = 1.0 / static_cast<double>(targetFps);
+			const double frameTime = std::chrono::duration_cast<std::chrono::duration<double>>(
+				std::chrono::high_resolution_clock::now() - start).count();
+
+			if (frameTime < targetFrameTime)
+			{
+				windowsShell::waitForMessagesOrTimeout(targetFrameTime - frameTime);
+			}
+		}
 
 	#pragma endregion
 

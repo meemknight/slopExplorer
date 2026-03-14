@@ -8,6 +8,7 @@ namespace windowsShell
 	bool initTrayIcon();
 	void shutdownTrayIcon();
 	void pumpMessages();
+	void waitForMessagesOrTimeout(double timeoutSeconds);
 
 	bool consumeCreateWindowRequest();
 	bool consumeQuitRequest();

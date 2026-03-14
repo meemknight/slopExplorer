@@ -45,9 +45,26 @@ namespace
 			ImGui::SetNextWindowSize({900, 600}, ImGuiCond_FirstUseEver);
 		}
 
-		if (ImGui::Begin(windowLabel, &windowData.open))
+		const bool beginResult = ImGui::Begin(windowLabel, &windowData.open);
+		if (ImGuiViewport *viewport = ImGui::GetWindowViewport())
+		{
+			windowData.nativeViewportId = viewport->ID;
+			windowData.nativeWindowCloseRequested = viewport->PlatformRequestClose;
+		}
+		else
+		{
+			windowData.nativeViewportId = 0;
+			windowData.nativeWindowCloseRequested = false;
+		}
+
+		if (beginResult)
 		{
 			ImGui::PushID(windowId);
+
+			float &fontScale = fileExplorer::globalFontScale();
+			ImGui::SliderFloat("Global Font Scale", &fontScale, 0.75f, 3.5f, "%.2f");
+			ImGui::TextUnformatted("Applies to all explorer windows.");
+			ImGui::Separator();
 
 			if (ImGui::Button("New Explorer"))
 			{
@@ -164,16 +181,43 @@ namespace fileExplorer
 	{
 		bool createWindowRequest = false;
 		std::vector<int> windowsToClose;
+		std::vector<unsigned int> nativeViewportsToClose;
 
 		for (auto &windowEntry : windows)
 		{
+			const bool wasOpen = windowEntry.second.open;
 			drawSingleWindow(windowEntry.first, windowEntry.second, createWindowRequest);
 
 			if (!windowEntry.second.open)
 			{
 				windowsToClose.push_back(windowEntry.first);
+
+				if (wasOpen && windowEntry.second.nativeWindowCloseRequested && windowEntry.second.nativeViewportId != 0)
+				{
+					nativeViewportsToClose.push_back(windowEntry.second.nativeViewportId);
+				}
 			}
 		}
+
+		for (const auto &windowEntry : windows)
+		{
+			if (!windowEntry.second.open)
+			{
+				continue;
+			}
+
+			for (unsigned int nativeViewportId : nativeViewportsToClose)
+			{
+				if (windowEntry.second.nativeViewportId == nativeViewportId)
+				{
+					windowsToClose.push_back(windowEntry.first);
+					break;
+				}
+			}
+		}
+
+		std::sort(windowsToClose.begin(), windowsToClose.end());
+		windowsToClose.erase(std::unique(windowsToClose.begin(), windowsToClose.end()), windowsToClose.end());
 
 		for (int closedWindowId : windowsToClose)
 		{

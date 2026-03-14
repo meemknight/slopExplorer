@@ -7,10 +7,12 @@ namespace fileExplorer
 	struct fileExplorerWindow
 	{
 		bool open = true;
+		bool nativeWindowCloseRequested = false;
 		bool showHiddenFiles = false;
 		bool gridView = false;
 		float leftPaneWidth = 220.0f;
 		int selectedFolder = 0;
+		unsigned int nativeViewportId = 0;
 		char currentPath[512] = "C:\\";
 		char searchFilter[128] = {};
 	};

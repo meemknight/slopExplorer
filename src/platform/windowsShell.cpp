@@ -4,7 +4,12 @@
 	#include <Windows.h>
 	#include <shellapi.h>
 	#include <cstring>
+#else
+	#include <chrono>
+	#include <thread>
+#endif
 
+#ifdef _WIN32
 namespace
 {
 	constexpr const char *singleInstanceMutexName = "Local\\fileExplorer_single_instance_mutex";
@@ -223,6 +228,22 @@ namespace windowsShell
 		}
 	}
 
+	void waitForMessagesOrTimeout(double timeoutSeconds)
+	{
+		if (timeoutSeconds <= 0.0)
+		{
+			return;
+		}
+
+		DWORD timeoutMilliseconds = static_cast<DWORD>(timeoutSeconds * 1000.0);
+		if (timeoutMilliseconds == 0)
+		{
+			timeoutMilliseconds = 1;
+		}
+
+		MsgWaitForMultipleObjectsEx(0, nullptr, timeoutMilliseconds, QS_ALLINPUT, MWMO_INPUTAVAILABLE);
+	}
+
 	bool consumeCreateWindowRequest()
 	{
 		const bool result = pendingCreateWindowRequest;
@@ -247,6 +268,13 @@ namespace windowsShell
 	bool initTrayIcon() { return true; }
 	void shutdownTrayIcon() {}
 	void pumpMessages() {}
+	void waitForMessagesOrTimeout(double timeoutSeconds)
+	{
+		if (timeoutSeconds > 0.0)
+		{
+			std::this_thread::sleep_for(std::chrono::duration<double>(timeoutSeconds));
+		}
+	}
 	bool consumeCreateWindowRequest() { return false; }
 	bool consumeQuitRequest() { return false; }
 }

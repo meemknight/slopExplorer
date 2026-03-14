@@ -17,6 +17,50 @@
 #include "fileExplorerWindow.h"
 #include "windowsShell.h"
 
+namespace
+{
+	float targetFrameRate = 30.0f;
+	double lastExplorerInteractionTime = 0.0;
+
+	bool hasKeyboardInteraction(platform::Input &input)
+	{
+		for (int i = 0; i < platform::Button::BUTTONS_COUNT; i++)
+		{
+			if (input.buttons[i].pressed || input.buttons[i].held || input.buttons[i].released || input.buttons[i].typed)
+			{
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	void updateTargetFrameRate(platform::Input &input, size_t openWindowCount)
+	{
+		if (openWindowCount == 0)
+		{
+			targetFrameRate = 5.0f;
+			return;
+		}
+
+		ImGuiIO &io = ImGui::GetIO();
+		const bool mouseInteraction = io.WantCaptureMouse &&
+			((io.MouseDelta.x != 0.0f) || (io.MouseDelta.y != 0.0f) || (io.MouseWheel != 0.0f) || (io.MouseWheelH != 0.0f)
+				|| input.isLMousePressed() || input.isRMousePressed() || input.isLMouseHeld() || input.isRMouseHeld());
+		const bool keyboardInteraction = io.WantCaptureKeyboard && hasKeyboardInteraction(input);
+		const bool widgetInteraction = ImGui::IsAnyItemActive() || ImGui::IsAnyItemFocused();
+		const bool interactingThisFrame = mouseInteraction || keyboardInteraction || widgetInteraction;
+
+		if (interactingThisFrame)
+		{
+			lastExplorerInteractionTime = ImGui::GetTime();
+		}
+
+		const bool recentInteraction = (ImGui::GetTime() - lastExplorerInteractionTime) < 0.35;
+		targetFrameRate = recentInteraction ? 30.0f : 10.0f;
+	}
+}
+
 
 bool initGame()
 {
@@ -99,6 +143,7 @@ bool gameLogic(float deltaTime, platform::Input &input)
 	}
 
 	fileExplorer::drawWindows(explorerWindows, nextExplorerWindowId);
+	updateTargetFrameRate(input, explorerWindows.size());
 
 	//I don't want this feature!
 	//if (ImGui::IsKeyPressed(ImGuiKey_Escape))
@@ -109,6 +154,11 @@ bool gameLogic(float deltaTime, platform::Input &input)
 	return true;
 #pragma endregion
 
+}
+
+float getTargetFrameRate()
+{
+	return targetFrameRate;
 }
 
 //This function might not be be called if the program is forced closed

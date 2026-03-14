@@ -7,6 +7,7 @@
 bool initGame();
 bool gameLogic(float deltaTime, platform::Input &input);
 void closeGame();
+float getTargetFrameRate();
 
 namespace platform
 {

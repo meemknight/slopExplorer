@@ -6303,7 +6303,8 @@ void ImGui::RenderWindowTitleBarContents(ImGuiWindow* window, const ImRect& titl
     ImGuiStyle& style = g.Style;
     ImGuiWindowFlags flags = window->Flags;
 
-    const bool has_close_button = (p_open != NULL);
+    const bool has_os_close_button = window->ViewportOwned && window->Viewport != NULL && (window->Viewport->Flags & ImGuiViewportFlags_NoDecoration) == 0;
+    const bool has_close_button = (p_open != NULL) && !has_os_close_button;
     const bool has_collapse_button = !(flags & ImGuiWindowFlags_NoCollapse) && (style.WindowMenuButtonPosition != ImGuiDir_None);
 
     // Close & Collapse button are on the Menu NavLayer and don't default focus (unless there's nothing else on that layer)
@@ -7153,7 +7154,6 @@ bool ImGui::Begin(const char* name, bool* p_open, ImGuiWindowFlags flags)
         {
             if (!window->DockIsActive || window->DockTabIsVisible)
             {
-                window->Viewport->PlatformRequestClose = false;
                 g.NavWindowingToggleLayer = false; // Assume user mapped PlatformRequestClose on ALT-F4 so we disable ALT for menu toggle. False positive not an issue.
                 IMGUI_DEBUG_LOG_VIEWPORT("[viewport] Window '%s' PlatformRequestClose\n", window->Name);
                 *p_open = false;
@@ -16513,8 +16513,9 @@ static void ImGui::DockNodeUpdateTabBar(ImGuiDockNode* node, ImGuiWindow* host_w
 
     // Close button (after VisibleWindow was updated)
     // Note that VisibleWindow may have been overrided by CTRL+Tabbing, so VisibleWindow->TabId may be != from tab_bar->SelectedTabId
-    const bool close_button_is_enabled = node->HasCloseButton && node->VisibleWindow && node->VisibleWindow->HasCloseButton;
-    const bool close_button_is_visible = node->HasCloseButton;
+    const bool host_has_os_close_button = host_window->ViewportOwned && host_window->Viewport != NULL && (host_window->Viewport->Flags & ImGuiViewportFlags_NoDecoration) == 0;
+    const bool close_button_is_enabled = !host_has_os_close_button && node->HasCloseButton && node->VisibleWindow && node->VisibleWindow->HasCloseButton;
+    const bool close_button_is_visible = !host_has_os_close_button && node->HasCloseButton;
     //const bool close_button_is_visible = close_button_is_enabled; // Most people would expect this behavior of not even showing the button (leaving a hole since we can't claim that space as other windows in the tba bar have one)
     if (close_button_is_visible)
     {
